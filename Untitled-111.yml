@@ -1,28 +1,13 @@
 esphome:
-  name: vindriktning
-  friendly_name: VINDRIKTNING
-  platform: ESP8266
+  name: wemosd1
+  friendly_name: Wemos D1 mini
+
+esp8266:
   board: d1_mini
-
-
-# Enable logging
-logger:
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: "WzRY730CQuuAFJ8tYYP1uIUXhIpV6rdXnSjiInWHz1U="
-
-ota:
-  password: ""
-
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
- 
-
-captive_portal:
 
 ########## Setup #######################
 
@@ -86,42 +71,84 @@ font:
       weight: 700
     id: font2
     size: 30    
- 
+
+image:
+  - file: mdi:wifi-strength-1
+    id: i_wifi1
+    resize: 20x20 
+  - file: mdi:wifi-strength-2
+    id: i_wifi2
+    resize: 20x20 
+  - file: mdi:wifi-strength-3
+    id: i_wifi3
+    resize: 20x20 
+  - file: mdi:wifi-strength-4
+    id: i_wifi4
+    resize: 20x20 
+  - file: mdi:wifi-strength-off-outline
+    id: i_wifioff
+    resize: 20x20 
+  - file: mdi:white-balance-sunny
+    id: i_white_balance_sunny
+    resize: 20x20
+  - file: mdi:weather-sunny
+    id: i_weather_sunny
+    resize: 20x20 
+  - file: mdi:moon-waning-crescent
+    id: i_moon
+    resize: 20x20 
+
 display:
   - platform: st7735
     model: "INITR_18BLACKTAB"
     reset_pin: GPIO05
     cs_pin: GPIO15
     dc_pin: GPIO04
-    rotation: 0
+    rotation: 180
     device_width: 128
     device_height: 160
     col_start: 0
     row_start: 0
     eight_bit_color: true
-    update_interval: 5s
+    update_interval: 15s
     id: my_display
     pages:
       - id: page1
         lambda: |-
+          uint16_t var = (id(WiFiP).state);
+          switch (var) {
+            case 0 ... 24: it.image(108, 0, id(i_wifi1), red); break;
+            case 25 ... 49: it.image(108, 0, id(i_wifi2), yellow); break;
+            case 50 ... 74: it.image(108, 0, id(i_wifi3), lgreen); break;
+            case 75 ... 100: it.image(108, 0, id(i_wifi4), green); break;
+            default: it.image(108, 0, id(i_wifioff), red); break;
+            }
           it.strftime(it.get_width() / 2, 8, id(font3), my_white, TextAlign::CENTER, "%H:%M", id(ntp).now());
-          it.print(64, 22, id(font0), my_white, TextAlign::CENTER,  "PM1 мкг/m3");
-          it.printf(64, 44, id(font2), my_white, TextAlign::CENTER, "%.0f", id(pm1).state);
+          it.print(64, 22, id(font0), my_red, TextAlign::CENTER,  "PM1 мкг/m3");
+          it.printf(64, 44, id(font2), my_red, TextAlign::CENTER, "%.0f", id(pm1).state);
           it.print(64, 70, id(font0), my_white, TextAlign::CENTER,  "PM2.5 мкг/m3");
           it.printf(64, 92, id(font2), my_yellow, TextAlign::CENTER, "%.0f ", id(pm2).state);
           it.print(64, 123, id(font0), my_white, TextAlign::CENTER,  "PM10 мкг/m3");
           it.printf(64, 145, id(font2), my_white, TextAlign::CENTER, "%.0f", id(pm10).state);
       - id: page2
         lambda: |-
+          uint16_t var = (id(WiFiP).state);
+          switch (var) {
+            case 0 ... 24: it.image(108, 0, id(i_wifi1), red); break;
+            case 25 ... 49: it.image(108, 0, id(i_wifi2), yellow); break;
+            case 50 ... 74: it.image(108, 0, id(i_wifi3), lgreen); break;
+            case 75 ... 100: it.image(108, 0, id(i_wifi4), green); break;
+            default: it.image(108, 0, id(i_wifioff), red); break;
+            }
           it.strftime(it.get_width() / 2, 8, id(font3), my_white, TextAlign::CENTER, "%H:%M", id(ntp).now());
-          it.print(64, 22, id(font0), my_white, TextAlign::CENTER,  "НА УЛИЦЕ");
-          it.printf(64, 44, id(font2), my_white, TextAlign::CENTER, "%.1f", id(temp_outdoor).state);
-          it.print(64, 70, id(font0), my_white, TextAlign::CENTER,  "В ДОМЕ");
-          it.printf(64, 92, id(font2), my_yellow, TextAlign::CENTER, "%.1f ", id(temp_hall).state);
-          it.print(64, 123, id(font0), my_white, TextAlign::CENTER,  "СО2");
-          it.printf(64, 145, id(font2), my_white, TextAlign::CENTER, "%.1f", id(co2).state);
+          it.print(64, 22, id(font0), my_white, TextAlign::CENTER,  "ТЕМПЕРАТУРА");
+          it.printf(64, 44, id(font2), my_white, TextAlign::CENTER, "%.1f °C", id(bme280_temperature).state);
+          it.print(64, 70, id(font0), my_blue, TextAlign::CENTER,  "ВЛАЖНОСТЬ");
+          it.printf(64, 92, id(font2), my_blue, TextAlign::CENTER, "%.1f %%", id(bme280_humidity).state);
+          it.print(64, 123, id(font0), my_white, TextAlign::CENTER,  "ДАВЛЕНИЕ");
+          it.printf(64, 145, id(font2), my_white, TextAlign::CENTER, "%.1f hPa", id(bme280_pressure).state);
 interval:
-  - interval: 5s
+  - interval: 15s
     then:
       - display.page.show_next: my_display
       - component.update: my_display        
@@ -151,6 +178,51 @@ color:
     red: 0%
     green: 0%
     blue: 0%    
+  - id: red
+    red: 100%
+    green: 30%
+    blue: 30%
+
+  - id: tred
+    red: 100%
+    green: 0%
+    blue: 0%
+
+  - id: yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+
+  - id: lyellow
+    red: 100%
+    green: 50%
+    blue: 0%
+
+  - id: green
+    red: 0%
+    green: 100%
+    blue: 0%
+
+  - id: lgreen
+    red: 70%
+    green: 100%
+    blue: 0% 
+
+  - id: blue
+    red: 0%
+    green: 100%
+    blue: 100%
+
+  - id: white
+    red: 100%
+    green: 100%
+    blue: 100%
+
+  - id: black
+    red: 0%
+    green: 0%
+    blue: 0%  
+
 
 sensor:
   - platform: bme280_i2c
@@ -198,18 +270,45 @@ sensor:
     device_class: PM10
     accuracy_decimals: 0
     unit_of_measurement: µg/m³
-  - platform: homeassistant   # Температура на улице
-    id: temp_outdoor
-    entity_id: sensor.93_01_temp 
-  - platform: homeassistant   # Температура в доме
-    id: temp_hall
-    entity_id: sensor.0xa4c1387ab81dc9bd_temperature
-  - platform: homeassistant   # CO2
-    id: co2
-    entity_id: sensor.0x00124b001d3b8107_co2  
-
+  - platform: wifi_signal
+    name: "${name} Wifi"
+    update_interval: 60s  
+    id: wifi_signal_db
+    entity_category: "diagnostic"
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "${name} WiFi Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: "diagnostic"
+    id: WiFiP
 
        
 time:
   - platform: homeassistant
     id: ntp
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ezI65nG2RVzS9yDh/YOyr7sGT64XRbL6uHYlfyVxLFI=
+
+
+# Allow Over-The-Air updates
+ota:
+
+# Allow provisioning Wi-Fi via serial
+improv_serial:
+
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device via WiFi AP.
+captive_portal:
+
+
+# To have a "next url" for improv serial
+web_server:
